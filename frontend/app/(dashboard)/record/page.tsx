@@ -22,7 +22,7 @@ export default function RecordPage() {
 
     try {
       await createBot.mutateAsync({
-        meetingUrl: meetingUrl,
+        native_meeting_id: meetingUrl,
         platform: 'google_meet',
       });
 
