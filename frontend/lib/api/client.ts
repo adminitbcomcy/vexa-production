@@ -1,6 +1,6 @@
 /**
  * Vexa.ai API Client
- * Axios-based HTTP client with authentication and error handling
+ * Axios-based HTTP client with Clerk authentication and error handling
  */
 
 import axios, {  type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
@@ -16,13 +16,31 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - add API key from localStorage
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Get Vexa API token from localStorage
-    const vexaToken = localStorage.getItem('vexa_api_token');
+// Store Clerk token getter function (will be set from React component)
+let getClerkToken: (() => Promise<string | null>) | null = null;
 
-    if (vexaToken && config.headers) {
+export const setClerkTokenGetter = (getter: () => Promise<string | null>) => {
+  getClerkToken = getter;
+};
+
+// Request interceptor - add Clerk token as Bearer token
+apiClient.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    // Try to get Clerk token first
+    if (getClerkToken && config.headers) {
+      try {
+        const token = await getClerkToken();
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error('Failed to get Clerk token:', error);
+      }
+    }
+
+    // Fallback to Vexa API token from localStorage (for backward compatibility)
+    const vexaToken = typeof window !== 'undefined' ? localStorage.getItem('vexa_api_token') : null;
+    if (vexaToken && config.headers && !config.headers['Authorization']) {
       config.headers['X-API-Key'] = vexaToken;
     }
 
