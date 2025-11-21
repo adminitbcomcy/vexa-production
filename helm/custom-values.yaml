@@ -1,0 +1,483 @@
+# Vexa.ai Custom Values - GitHub Container Registry
+# Override default values to use ghcr.io images
+
+global:
+  domain: voice.axiomic.com.cy
+  storageClass: longhorn
+  imagePullPolicy: IfNotPresent
+  imageRegistry: "ghcr.io/adminitbcomcy"
+
+# Image pull secrets for GitHub Container Registry
+imagePullSecrets:
+  - name: ghcr-secret
+
+# PostgreSQL - use existing deployment
+postgresql:
+  enabled: false  # Already deployed
+
+# Redis - use existing deployment
+redis:
+  enabled: false  # Already deployed
+
+# API Gateway
+apiGateway:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-api-gateway
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    LOG_LEVEL: "info"
+    ENVIRONMENT: "production"
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_URL: "redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0"
+    ADMIN_API_URL: "http://vexa-admin-api:8001"
+    BOT_MANAGER_URL: "http://vexa-bot-manager:8080"
+    TRANSCRIPTION_COLLECTOR_URL: "http://vexa-transcription-collector:8000"
+    WHISPER_PROXY_URL: "http://vexa-whisper-proxy:9090"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8000
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Admin API
+adminApi:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-admin-api
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8001
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8001
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Bot Manager
+botManager:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-bot-manager
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    LOG_LEVEL: "info"
+    BOT_NAMESPACE: "vexa"
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_URL: "redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0"
+    REDIS_STREAM_URL: "redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0"
+    CELERY_BROKER_URL: "redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1"
+    CELERY_RESULT_BACKEND: "redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  rbac:
+    create: true
+    rules:
+      - apiGroups: ["batch"]
+        resources: ["jobs"]
+        verbs: ["create", "get", "list", "watch", "delete"]
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: [""]
+        resources: ["pods/log"]
+        verbs: ["get"]
+
+  serviceAccount:
+    create: true
+    name: "vexa-bot-manager"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Transcription Collector
+transcriptionCollector:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-transcription-collector
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_STREAM_NAME: "transcription_segments"
+    REDIS_CONSUMER_GROUP: "collector_group"
+    SEGMENT_IMMUTABILITY_THRESHOLD: "30"
+    SEGMENT_TTL: "3600"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+
+# MCP
+mcp:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: vexa-mcp
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 18888
+    targetPort: 18888
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 250m
+
+  env:
+    LOG_LEVEL: "info"
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 18888
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 18888
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  autoscaling:
+    enabled: false
+
+# Whisper Proxy - RunPod.io Integration
+whisperProxy:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: vexa-whisper-proxy
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    # RunPod.io configuration - set via secrets
+    RUNPOD_API_KEY: ""  # From secret
+    RUNPOD_ENDPOINT_ID: ""  # Set this value
+    WHISPER_MODEL_SIZE: "large-v3"
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: "ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs"  # URL-encoded
+    REDIS_STREAM_NAME: "transcription_segments"
+    LANGUAGE_DETECTION_SEGMENTS: "10"
+    VAD_FILTER_THRESHOLD: "0.2"
+    MAX_CONCURRENT_STREAMS: "10"
+
+  healthChecks:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 9090
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 9090
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "vexa-api-gateway"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$http_x_api_key"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "vexa-session"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+
+  hosts:
+    - host: voice.axiomic.com.cy
+      paths:
+        - path: /api
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway
+            port: 8000
+        - path: /admin
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway
+            port: 8000
+        - path: /ws
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway
+            port: 8000
+
+  tls:
+    - secretName: vexa-tls
+      hosts:
+        - voice.axiomic.com.cy
+
+# Secrets - use existing
+secrets:
+  existingSecret: "vexa-secrets"
+  create: false
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  apiGateway:
+    minAvailable: 1
+  adminApi:
+    minAvailable: 1
+  botManager:
+    minAvailable: 1
+  transcriptionCollector:
+    minAvailable: 1
+
+# Security Context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false  # FastAPI needs writable /tmp
+
+# ConfigMap configuration (for services that reference it)
+config:
+  maxMeetingDuration: "14400"
+  transcriptionLanguage: "auto"
+  speakerDiarization: "true"
+  summaryModel: "gpt-4"
+  summaryPrompt: "Analyze this meeting transcript and provide: 1) Overview, 2) Key Decisions, 3) Action Items with owners, 4) Important Questions, 5) Highlights"
+
+  googleMeet:
+    enabled: true
+    autoJoin: true
+    waitForAdmission: true
+
+  microsoftTeams:
+    enabled: true
+    autoJoin: true
+
+  zoom:
+    enabled: false

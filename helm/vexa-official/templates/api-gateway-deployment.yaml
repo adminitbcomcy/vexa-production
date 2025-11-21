@@ -1,0 +1,180 @@
+{{- if .Values.apiGateway.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vexa.fullname" . }}-api-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vexa.apiGateway.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.apiGateway.service.type }}
+  ports:
+    - port: {{ .Values.apiGateway.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "vexa.apiGateway.selectorLabels" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vexa.fullname" . }}-api-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vexa.apiGateway.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.apiGateway.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vexa.apiGateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "vexa.apiGateway.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+        - name: api-gateway
+          image: "{{ include "vexa.imageRepository" (dict "imageRoot" .Values.apiGateway.image "global" .Values.global) }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.apiGateway.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.apiGateway.env.LOG_LEVEL | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.apiGateway.env.ENVIRONMENT | quote }}
+
+            # Database connection
+            - name: DB_HOST
+              value: {{ .Values.apiGateway.env.DB_HOST | quote }}
+            - name: DB_PORT
+              value: {{ .Values.apiGateway.env.DB_PORT | quote }}
+            - name: DB_NAME
+              value: {{ .Values.apiGateway.env.DB_NAME | quote }}
+            - name: DB_USER
+              value: {{ .Values.apiGateway.env.DB_USER | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: db-password
+
+            # Redis connection
+            - name: REDIS_HOST
+              value: {{ .Values.apiGateway.env.REDIS_HOST | quote }}
+            - name: REDIS_PORT
+              value: {{ .Values.apiGateway.env.REDIS_PORT | quote }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: redis-password
+            # Redis URL (full connection string with password)
+            - name: REDIS_URL
+              value: {{ .Values.apiGateway.env.REDIS_URL | quote }}
+
+            # Service URLs
+            - name: ADMIN_API_URL
+              value: {{ .Values.apiGateway.env.ADMIN_API_URL | quote }}
+            - name: BOT_MANAGER_URL
+              value: {{ .Values.apiGateway.env.BOT_MANAGER_URL | quote }}
+            - name: TRANSCRIPTION_COLLECTOR_URL
+              value: {{ .Values.apiGateway.env.TRANSCRIPTION_COLLECTOR_URL | quote }}
+            - name: WHISPER_PROXY_URL
+              value: {{ .Values.apiGateway.env.WHISPER_PROXY_URL | quote }}
+
+            # Optional: OpenAI for summaries
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: openai-api-key
+                  optional: true
+
+          resources:
+            {{- toYaml .Values.apiGateway.resources | nindent 12 }}
+
+          livenessProbe:
+            {{- toYaml .Values.healthChecks.livenessProbe | nindent 12 }}
+
+          readinessProbe:
+            {{- toYaml .Values.healthChecks.readinessProbe | nindent 12 }}
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+---
+{{- if .Values.apiGateway.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "vexa.fullname" . }}-api-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vexa.apiGateway.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "vexa.fullname" . }}-api-gateway
+  minReplicas: {{ .Values.apiGateway.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.apiGateway.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.apiGateway.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.apiGateway.autoscaling.targetMemoryUtilizationPercentage }}
+{{- end }}
+---
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "vexa.fullname" . }}-api-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vexa.apiGateway.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.apiGateway.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "vexa.apiGateway.selectorLabels" . | nindent 6 }}
+{{- end }}
+{{- end }}

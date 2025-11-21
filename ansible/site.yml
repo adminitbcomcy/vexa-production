@@ -1,0 +1,240 @@
+---
+# Main Ansible playbook for Vexa.ai production platform
+# Completes Kubernetes cluster setup and prepares for Helm deployments
+
+- name: Verify cluster connectivity
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Ping all nodes
+      ping:
+
+    - name: Display node information
+      debug:
+        msg: "{{ hostname }} ({{ ansible_host }}) - Private IP: {{ private_ip }}"
+
+- name: Verify first control plane is ready
+  hosts: first_control_plane
+  gather_facts: no
+  tasks:
+    - name: Check if kubectl is configured
+      command: kubectl get nodes
+      register: kubectl_nodes
+      changed_when: false
+      failed_when: false
+
+    - name: Display current cluster state
+      debug:
+        msg: "{{ kubectl_nodes.stdout_lines }}"
+      when: kubectl_nodes.rc == 0
+
+    - name: Check Calico pods
+      command: kubectl get pods -n kube-system -l k8s-app=calico-node
+      register: calico_pods
+      changed_when: false
+      failed_when: false
+
+    - name: Display Calico status
+      debug:
+        msg: "{{ calico_pods.stdout_lines }}"
+      when: calico_pods.rc == 0
+
+- name: Join additional control plane nodes (if not already joined)
+  hosts: control_planes
+  gather_facts: no
+  tasks:
+    - name: Skip first control plane
+      when: not is_first_cp | default(false)
+      block:
+        - name: Check if node is already part of cluster
+          stat:
+            path: /etc/kubernetes/kubelet.conf
+          register: kubelet_conf
+
+        - name: Get join token from first CP
+          command: kubeadm token list
+          register: token_list
+          delegate_to: "{{ hostvars['cp-1']['ansible_host'] }}"
+          when: not kubelet_conf.stat.exists
+          changed_when: false
+
+        - name: Extract token
+          set_fact:
+            join_token: "{{ token_list.stdout_lines[1].split()[0] }}"
+          when: not kubelet_conf.stat.exists and token_list.stdout_lines | length > 1
+
+        - name: Get CA cert hash
+          shell: |
+            openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
+              openssl rsa -pubin -outform der 2>/dev/null | \
+              openssl dgst -sha256 -hex | sed 's/^.* //'
+          register: ca_hash
+          delegate_to: "{{ hostvars['cp-1']['ansible_host'] }}"
+          when: not kubelet_conf.stat.exists
+          changed_when: false
+
+        - name: Upload certificates (generate new certificate key)
+          command: kubeadm init phase upload-certs --upload-certs
+          register: upload_certs
+          delegate_to: "{{ hostvars['cp-1']['ansible_host'] }}"
+          when: not kubelet_conf.stat.exists
+          changed_when: false
+
+        - name: Extract certificate key
+          set_fact:
+            cert_key: "{{ upload_certs.stdout_lines[-1] }}"
+          when: not kubelet_conf.stat.exists and upload_certs.stdout_lines is defined
+
+        - name: Join control plane to cluster
+          command: >
+            kubeadm join {{ vip_address }}:6443
+            --token {{ join_token }}
+            --discovery-token-ca-cert-hash sha256:{{ ca_hash.stdout }}
+            --control-plane
+            --certificate-key {{ cert_key }}
+            --apiserver-advertise-address {{ private_ip }}
+          when: not kubelet_conf.stat.exists
+          register: join_result
+
+        - name: Configure kubectl for this CP
+          when: not kubelet_conf.stat.exists and join_result is changed
+          block:
+            - name: Create .kube directory
+              file:
+                path: /root/.kube
+                state: directory
+                mode: '0755'
+
+            - name: Copy admin.conf
+              copy:
+                src: /etc/kubernetes/admin.conf
+                dest: /root/.kube/config
+                remote_src: yes
+                owner: root
+                group: root
+                mode: '0600'
+
+        - name: Display join result
+          debug:
+            msg: "Control plane {{ hostname }} joined successfully"
+          when: join_result is changed
+
+- name: Join worker nodes (if not already joined)
+  hosts: workers
+  gather_facts: no
+  tasks:
+    - name: Check if node is already part of cluster
+      stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf
+
+    - name: Get join token from first CP
+      command: kubeadm token list
+      register: token_list
+      delegate_to: "{{ hostvars['cp-1']['ansible_host'] }}"
+      when: not kubelet_conf.stat.exists
+      changed_when: false
+
+    - name: Extract token
+      set_fact:
+        join_token: "{{ token_list.stdout_lines[1].split()[0] }}"
+      when: not kubelet_conf.stat.exists and token_list.stdout_lines | length > 1
+
+    - name: Get CA cert hash
+      shell: |
+        openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | \
+          openssl rsa -pubin -outform der 2>/dev/null | \
+          openssl dgst -sha256 -hex | sed 's/^.* //'
+      register: ca_hash
+      delegate_to: "{{ hostvars['cp-1']['ansible_host'] }}"
+      when: not kubelet_conf.stat.exists
+      changed_when: false
+
+    - name: Join worker to cluster
+      command: >
+        kubeadm join {{ vip_address }}:6443
+        --token {{ join_token }}
+        --discovery-token-ca-cert-hash sha256:{{ ca_hash.stdout }}
+      when: not kubelet_conf.stat.exists
+      register: join_result
+
+    - name: Display join result
+      debug:
+        msg: "Worker {{ hostname }} joined successfully"
+      when: join_result is changed
+
+- name: Label worker nodes
+  hosts: first_control_plane
+  gather_facts: no
+  tasks:
+    - name: Get current nodes
+      command: kubectl get nodes -o json
+      register: nodes_json
+      changed_when: false
+
+    - name: Parse nodes
+      set_fact:
+        cluster_nodes: "{{ nodes_json.stdout | from_json }}"
+
+    - name: Label worker nodes
+      command: >
+        kubectl label node {{ item.hostname }}
+        node-role.kubernetes.io/worker=worker
+        --overwrite
+      loop:
+        - { hostname: "axiomic-voice-worker-1" }
+        - { hostname: "axiomic-voice-worker-2" }
+      when: cluster_nodes.items | selectattr('metadata.name', 'equalto', item.hostname) | list | length > 0
+      register: label_result
+      failed_when: false
+      changed_when: "'labeled' in label_result.stdout"
+
+- name: Final cluster verification
+  hosts: first_control_plane
+  gather_facts: no
+  tasks:
+    - name: Get all nodes
+      command: kubectl get nodes -o wide
+      register: all_nodes
+      changed_when: false
+
+    - name: Display cluster state
+      debug:
+        msg: "{{ all_nodes.stdout_lines }}"
+
+    - name: Get all pods
+      command: kubectl get pods -A
+      register: all_pods
+      changed_when: false
+
+    - name: Display pods
+      debug:
+        msg: "{{ all_pods.stdout_lines }}"
+
+    - name: Check for NotReady nodes
+      shell: kubectl get nodes | grep -c NotReady || true
+      register: notready_count
+      changed_when: false
+
+    - name: Warn if nodes are NotReady
+      debug:
+        msg: "WARNING: {{ notready_count.stdout }} node(s) are NotReady. Wait for CNI to initialize."
+      when: notready_count.stdout|int > 0
+
+    - name: Display success message
+      debug:
+        msg: |
+          ========================================
+          Cluster Setup Complete!
+          ========================================
+          Total Nodes: {{ all_nodes.stdout_lines | length - 1 }}
+          Control Planes: 3
+          Workers: 2
+          ========================================
+          Next Steps:
+          1. Install Longhorn: helm install longhorn...
+          2. Install KEDA: helm install keda...
+          3. Install GPU Operator: helm install gpu-operator...
+          4. Deploy Vexa.ai: helm install vexa...
+          ========================================
+      when: notready_count.stdout|int == 0

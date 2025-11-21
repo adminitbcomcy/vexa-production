@@ -1,0 +1,199 @@
+{{- if .Values.adminApi.enabled -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vexa.fullname" . }}-admin-api
+  labels:
+    {{- include "vexa.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "vexa.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-api
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vexa.fullname" . }}-admin-api
+  labels:
+    {{- include "vexa.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-api
+spec:
+  replicas: {{ .Values.adminApi.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vexa.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: admin-api
+  template:
+    metadata:
+      labels:
+        {{- include "vexa.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: admin-api
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: admin-api
+          image: "{{ include "vexa.imageRepository" (dict "imageRoot" .Values.adminApi.image "global" .Values.global) }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8001
+              protocol: TCP
+          env:
+            # Database configuration
+            - name: POSTGRES_HOST
+              value: {{ include "vexa.fullname" . }}-postgresql
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "vexa.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: postgres-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: postgres-password
+
+            # Database configuration (DB_* format expected by application)
+            - name: DB_HOST
+              value: {{ include "vexa.fullname" . }}-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "vexa.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: postgres-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: postgres-password
+
+            # Redis configuration
+            - name: REDIS_HOST
+              value: {{ include "vexa.fullname" . }}-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: redis-password
+
+            # JWT configuration
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "vexa.fullname" . }}-secrets
+                  key: jwt-secret
+            - name: JWT_ALGORITHM
+              value: "HS256"
+            - name: JWT_EXPIRATION_HOURS
+              value: "24"
+
+            # API configuration
+            - name: API_HOST
+              value: "0.0.0.0"
+            - name: API_PORT
+              value: "8001"
+            - name: CORS_ORIGINS
+              value: {{ .Values.adminApi.env.CORS_ORIGINS | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.adminApi.env.LOG_LEVEL | quote }}
+
+            {{- range $key, $value := .Values.adminApi.env }}
+            {{- if and (ne $key "CORS_ORIGINS") (ne $key "LOG_LEVEL") }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            {{- toYaml .Values.adminApi.resources | nindent 12 }}
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "vexa.fullname" . }}-admin-api
+  labels:
+    {{- include "vexa.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "vexa.fullname" . }}-admin-api
+  minReplicas: {{ .Values.adminApi.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.adminApi.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.adminApi.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.adminApi.autoscaling.targetMemoryUtilizationPercentage }}
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "vexa.fullname" . }}-admin-api
+  labels:
+    {{- include "vexa.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-api
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "vexa.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: admin-api
+{{- end }}

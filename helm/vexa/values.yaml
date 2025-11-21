@@ -1,0 +1,307 @@
+# Vexa.ai Production Values
+# Configure all backend components for Kubernetes deployment
+
+global:
+  storageClass: longhorn  # Installed via Longhorn Helm chart
+  imagePullPolicy: IfNotPresent
+
+# PostgreSQL Database
+postgresql:
+  enabled: true
+  auth:
+    username: vexa
+    password: "changeme-in-production"
+    database: vexa
+  primary:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 50Gi
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+
+# Redis (for queues and caching)
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "changeme-in-production"
+  master:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+
+# Vexa API Server (FastAPI)
+api:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: vexa/api
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    DATABASE_URL: "postgresql://vexa:changeme-in-production@vexa-postgresql:5432/vexa"
+    REDIS_URL: "redis://:changeme-in-production@vexa-redis-master:6379/0"
+    WHISPER_MODEL: "large-v3"
+    OPENAI_API_KEY: ""  # Set via secret
+    ENVIRONMENT: "production"
+    LOG_LEVEL: "info"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# WebSocket Gateway (real-time transcription updates)
+websocket:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: vexa/websocket-gateway
+    tag: "latest"
+
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    REDIS_URL: "redis://:changeme-in-production@vexa-redis-master:6379/0"
+    WS_PORT: "8001"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Whisper GPU Workers (transcription)
+whisperWorker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: vexa/whisper-worker
+    tag: "latest"
+
+  resources:
+    requests:
+      memory: 8Gi
+      cpu: 2000m
+      nvidia.com/gpu: 1
+    limits:
+      memory: 16Gi
+      cpu: 4000m
+      nvidia.com/gpu: 1
+
+  nodeSelector:
+    nvidia.com/gpu.product: "NVIDIA-GPU"  # Select GPU nodes
+
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+  env:
+    MODEL_SIZE: "large-v3"
+    MODEL_CACHE_DIR: "/models"
+    REDIS_QUEUE: "transcription-queue"
+    REDIS_URL: "redis://:changeme-in-production@vexa-redis-master:6379/0"
+    BATCH_SIZE: "1"
+    COMPUTE_TYPE: "float16"
+
+  persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 20Gi  # Model weights storage
+    mountPath: /models
+
+  # KEDA autoscaling based on Redis queue depth
+  keda:
+    enabled: true
+    minReplicaCount: 1
+    maxReplicaCount: 10
+    pollingInterval: 15
+    cooldownPeriod: 300
+    triggers:
+      - type: redis
+        metadata:
+          address: "vexa-redis-master:6379"
+          password: "changeme-in-production"
+          listName: "transcription-queue"
+          listLength: "5"  # Scale up when queue > 5 items
+
+# Playwright Bots (meeting capture)
+playwrightBot:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: vexa/playwright-bot
+    tag: "latest"
+
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 2000m
+
+  env:
+    REDIS_QUEUE: "meeting-capture-queue"
+    REDIS_URL: "redis://:changeme-in-production@vexa-redis-master:6379/0"
+    HEADLESS: "true"
+    VIEWPORT_WIDTH: "1920"
+    VIEWPORT_HEIGHT: "1080"
+    AUDIO_CAPTURE: "true"
+
+  # KEDA autoscaling based on meeting queue
+  keda:
+    enabled: true
+    minReplicaCount: 1
+    maxReplicaCount: 5
+    pollingInterval: 30
+    cooldownPeriod: 600
+    triggers:
+      - type: redis
+        metadata:
+          address: "vexa-redis-master:6379"
+          password: "changeme-in-production"
+          listName: "meeting-capture-queue"
+          listLength: "2"
+
+# Celery Worker (background tasks)
+celeryWorker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: vexa/celery-worker
+    tag: "latest"
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    CELERY_BROKER_URL: "redis://:changeme-in-production@vexa-redis-master:6379/1"
+    CELERY_RESULT_BACKEND: "redis://:changeme-in-production@vexa-redis-master:6379/1"
+    DATABASE_URL: "postgresql://vexa:changeme-in-production@vexa-postgresql:5432/vexa"
+    CONCURRENCY: "4"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "vexa-websocket"
+
+  hosts:
+    - host: vexa.local  # Change to your domain
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend:
+            service:
+              name: vexa-api
+              port:
+                number: 8000
+        - path: /ws
+          pathType: Prefix
+          backend:
+            service:
+              name: vexa-websocket
+              port:
+                number: 8001
+
+  tls:
+    - secretName: vexa-tls
+      hosts:
+        - vexa.local
+
+# Persistent Volume Claims
+persistence:
+  recordings:
+    enabled: true
+    storageClass: longhorn
+    accessMode: ReadWriteMany
+    size: 500Gi  # Meeting recordings storage
+
+  models:
+    enabled: true
+    storageClass: longhorn
+    accessMode: ReadWriteMany
+    size: 50Gi  # Whisper model weights
+
+# Service Monitor (Prometheus)
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 10s
+
+# ConfigMap for environment variables
+config:
+  maxMeetingDuration: "14400"  # 4 hours in seconds
+  transcriptionLanguage: "auto"
+  speakerDiarization: "true"
+  summaryModel: "gpt-4"
+  summaryPrompt: "Analyze this meeting transcript and provide: 1) Overview, 2) Key Decisions, 3) Action Items with owners, 4) Important Questions, 5) Highlights"
+
+# Secrets (create separately via kubectl)
+secrets:
+  existingSecret: ""  # Reference to existing secret
+  create: true
+  data:
+    openai-api-key: ""  # Base64 encoded
+    database-password: ""
+    redis-password: ""

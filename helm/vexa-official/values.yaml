@@ -1,0 +1,613 @@
+# Vexa.ai Helm Chart - Production Values
+# Domain: voice.axiomic.com.cy
+# Cluster: axiomic-voice (3 CP + 2 Workers, Rocky Linux 9)
+
+global:
+  domain: voice.axiomic.com.cy
+  storageClass: longhorn
+  imagePullPolicy: IfNotPresent
+  imageRegistry: "docker-registry.registry.svc.cluster.local:5000" # Internal Docker registry
+
+# PostgreSQL 15 - Main database
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+
+  auth:
+    username: vexa
+    password: "" # Override via --set or use existingSecret
+    database: vexa
+    existingSecret: "vexa-secrets"  # kubectl create secret
+    secretKeys:
+      adminPasswordKey: "db-password"
+
+  primary:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 50Gi
+      accessModes:
+        - ReadWriteOnce
+
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+
+    # PostgreSQL configuration
+    extendedConfiguration: |
+      max_connections = 200
+      shared_buffers = 1GB
+      effective_cache_size = 3GB
+      maintenance_work_mem = 256MB
+      checkpoint_completion_target = 0.9
+      wal_buffers = 16MB
+      default_statistics_target = 100
+      random_page_cost = 1.1
+      work_mem = 5242kB
+      min_wal_size = 1GB
+      max_wal_size = 4GB
+
+# Redis 7 - Queues, caching, pub/sub
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7.0-alpine"
+
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "" # Override or use existingSecret
+    existingSecret: "vexa-secrets"
+    existingSecretPasswordKey: "redis-password"
+
+  master:
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+      accessModes:
+        - ReadWriteOnce
+
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+
+    # Redis configuration
+    configuration: |
+      maxmemory 768mb
+      maxmemory-policy allkeys-lru
+      save 900 1
+      save 300 10
+      save 60 10000
+      appendonly yes
+      appendfsync everysec
+
+# API Gateway - Main REST API + WebSocket
+apiGateway:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-api-gateway
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    LOG_LEVEL: "info"
+    ENVIRONMENT: "production"
+    # Database connection (from secret)
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    # Redis connection (from secret)
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    # Service URLs
+    ADMIN_API_URL: "http://vexa-admin-api:8001"
+    BOT_MANAGER_URL: "http://vexa-bot-manager:8002"
+    TRANSCRIPTION_COLLECTOR_URL: "http://vexa-transcription-collector:8003"
+    WHISPER_PROXY_URL: "http://vexa-whisper-proxy:9090"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Admin API - User management
+adminApi:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-admin-api
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    # Admin API token (from secret)
+    ADMIN_API_TOKEN: ""  # Set via secret
+    # Database connection
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Bot Manager - Orchestrates meeting bots
+botManager:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-bot-manager
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8002
+    targetPort: 8002
+
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+  env:
+    LOG_LEVEL: "info"
+    # Bot configuration
+    BOT_IMAGE: "${REGISTRY}/vexa-bot:1.0.0"
+    BOT_NAMESPACE: "vexa"
+    # Database connection
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    # Redis connection
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    # Celery configuration
+    CELERY_BROKER_URL: "redis://vexa-redis-master:6379/1"
+    CELERY_RESULT_BACKEND: "redis://vexa-redis-master:6379/1"
+
+  # RBAC - bot-manager needs permissions to create/delete Jobs
+  rbac:
+    create: true
+    rules:
+      - apiGroups: ["batch"]
+        resources: ["jobs"]
+        verbs: ["create", "get", "list", "watch", "delete"]
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: [""]
+        resources: ["pods/log"]
+        verbs: ["get"]
+
+  serviceAccount:
+    create: true
+    name: "vexa-bot-manager"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Transcription Collector - Aggregates and persists transcripts
+transcriptionCollector:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-transcription-collector
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 8003
+    targetPort: 8003
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    # Database connection
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+    # Redis streams
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_STREAM_NAME: "transcription_segments"
+    REDIS_CONSUMER_GROUP: "collector_group"
+    SEGMENT_IMMUTABILITY_THRESHOLD: "30"  # seconds
+    SEGMENT_TTL: "3600"  # seconds
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+
+# MCP - Model Context Protocol for AI agents
+mcp:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: vexa-mcp
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 18888
+    targetPort: 18888
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 250m
+
+  env:
+    LOG_LEVEL: "info"
+    # Database connection
+    DB_HOST: "vexa-postgresql"
+    DB_PORT: "5432"
+    DB_NAME: "vexa"
+    DB_USER: "vexa"
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Whisper Proxy - Proxies to RunPod.io Serverless GPU
+whisperProxy:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: vexa-whisper-proxy
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+    # WebSocket port for audio streaming
+    wsPort: 9091
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  env:
+    LOG_LEVEL: "info"
+    # RunPod.io configuration (from secret)
+    RUNPOD_API_KEY: ""  # Set via secret
+    RUNPOD_ENDPOINT_ID: ""  # Your RunPod Serverless Endpoint ID
+    WHISPER_MODEL_SIZE: "large-v3"
+    # Redis for transcription segments
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    REDIS_STREAM_NAME: "transcription_segments"
+    # Whisper configuration
+    LANGUAGE_DETECTION_SEGMENTS: "10"
+    VAD_FILTER_THRESHOLD: "0.2"
+    MAX_CONCURRENT_STREAMS: "10"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Vexa Bot (as Job template) - Playwright bots for meeting capture
+vexaBot:
+  enabled: true
+
+  image:
+    repository: vexa-bot
+    tag: "1.0.0"
+
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 2000m
+
+  env:
+    HEADLESS: "true"
+    VIEWPORT_WIDTH: "1920"
+    VIEWPORT_HEIGHT: "1080"
+    AUDIO_CAPTURE: "true"
+    # Redis connection
+    REDIS_HOST: "vexa-redis-master"
+    REDIS_PORT: "6379"
+    # Whisper proxy URL
+    WHISPER_URL: "ws://vexa-whisper-proxy:9091"
+
+  # Job TTL - auto-cleanup after completion
+  ttlSecondsAfterFinished: 3600  # 1 hour
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "vexa-api-gateway"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$http_x_api_key"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "vexa-session"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+
+  hosts:
+    - host: voice.axiomic.com.cy
+      paths:
+        - path: /api
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway
+            port: 8000
+        - path: /admin
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway  # Routes internally to admin-api
+            port: 8000
+        - path: /ws
+          pathType: Prefix
+          service:
+            name: vexa-api-gateway
+            port: 8000
+
+  tls:
+    - secretName: vexa-tls
+      hosts:
+        - voice.axiomic.com.cy
+
+# Persistent Volume Claims
+persistence:
+  # Meeting recordings storage
+  recordings:
+    enabled: true
+    storageClass: longhorn
+    accessMode: ReadWriteMany
+    size: 500Gi
+
+  # AI model weights cache (if needed)
+  models:
+    enabled: false
+    storageClass: longhorn
+    accessMode: ReadWriteMany
+    size: 50Gi
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: false  # Enable if Prometheus Operator is installed
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+
+# Secrets configuration
+secrets:
+  # Use existing secret created manually
+  existingSecret: "vexa-secrets"
+  # Or create secret via Helm (not recommended for production)
+  create: false
+  data:
+    # All values should be base64 encoded
+    admin-api-token: ""
+    db-password: ""
+    redis-password: ""
+    runpod-api-key: ""
+    openai-api-key: ""  # For AI summaries
+
+# ConfigMap for application configuration
+config:
+  maxMeetingDuration: "14400"  # 4 hours in seconds
+  transcriptionLanguage: "auto"
+  speakerDiarization: "true"
+  summaryModel: "gpt-4"
+  summaryPrompt: "Analyze this meeting transcript and provide: 1) Overview, 2) Key Decisions, 3) Action Items with owners, 4) Important Questions, 5) Highlights"
+
+  # Platform-specific settings
+  googleMeet:
+    enabled: true
+    autoJoin: true
+    waitForAdmission: true
+
+  microsoftTeams:
+    enabled: true
+    autoJoin: true
+
+  zoom:
+    enabled: false  # Not yet implemented
+
+# Network Policies (Calico)
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Allow ingress from Ingress controller
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+
+  # Allow egress to PostgreSQL, Redis, external APIs
+  egress:
+    - to:
+      - podSelector:
+          matchLabels:
+            app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+      - podSelector:
+          matchLabels:
+            app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    - to:  # Allow external HTTPS (RunPod.io, OpenAI)
+      - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+
+# Resource Quotas
+resourceQuota:
+  enabled: false
+  hard:
+    requests.cpu: "20"
+    requests.memory: "40Gi"
+    limits.cpu: "40"
+    limits.memory: "80Gi"
+    persistentvolumeclaims: "10"
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  apiGateway:
+    minAvailable: 1
+  adminApi:
+    minAvailable: 1
+  botManager:
+    minAvailable: 1
+  transcriptionCollector:
+    minAvailable: 1
+
+# Health checks
+healthChecks:
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Affinity and tolerations
+affinity:
+  # Prefer spreading pods across nodes
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - vexa
+          topologyKey: kubernetes.io/hostname
+
+tolerations: []
+
+nodeSelector: {}
+
+# Priority Class
+priorityClassName: ""
+
+# Security Context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vexa.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vexa.labels" . | nindent 4 }}
+data:
+  # Database configuration (referenced by multiple services)
+  POSTGRES_DB: "vexa"
+
+  # Meeting configuration
+  MAX_MEETING_DURATION: {{ .Values.config.maxMeetingDuration | quote }}
+  TRANSCRIPTION_LANGUAGE: {{ .Values.config.transcriptionLanguage | quote }}
+  SPEAKER_DIARIZATION: {{ .Values.config.speakerDiarization | quote }}
+
+  # AI Summary configuration
+  SUMMARY_MODEL: {{ .Values.config.summaryModel | quote }}
+  SUMMARY_PROMPT: {{ .Values.config.summaryPrompt | quote }}
+
+  # Platform-specific settings
+  {{- if .Values.config.googleMeet.enabled }}
+  GOOGLE_MEET_ENABLED: "true"
+  GOOGLE_MEET_AUTO_JOIN: {{ .Values.config.googleMeet.autoJoin | quote }}
+  GOOGLE_MEET_WAIT_FOR_ADMISSION: {{ .Values.config.googleMeet.waitForAdmission | quote }}
+  {{- end }}
+
+  {{- if .Values.config.microsoftTeams.enabled }}
+  MICROSOFT_TEAMS_ENABLED: "true"
+  MICROSOFT_TEAMS_AUTO_JOIN: {{ .Values.config.microsoftTeams.autoJoin | quote }}
+  {{- end }}
+
+  {{- if .Values.config.zoom.enabled }}
+  ZOOM_ENABLED: "true"
+  {{- end }}

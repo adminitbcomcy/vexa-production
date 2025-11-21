@@ -1,0 +1,20 @@
+apiVersion: v2
+name: vexa
+description: Vexa.ai - Self-hosted AI meeting transcription platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - transcription
+  - meetings
+  - whisper
+  - kubernetes
+home: https://github.com/Vexa-ai/vexa
+sources:
+  - https://github.com/Vexa-ai/vexa
+maintainers:
+  - name: Axiomic Team
+    email: admin@axiomic.com.cy
+icon: https://vexa.ai/icon.png
+dependencies: []

@@ -1,0 +1,16 @@
+apiVersion: v2
+name: vexa
+description: Vexa.ai AI Meeting Assistant Platform - Complete Backend Stack
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - transcription
+  - meetings
+  - websocket
+  - whisper
+maintainers:
+  - name: Vexa Team
+    email: dev@vexa.ai
+dependencies: []
