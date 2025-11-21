@@ -49,8 +49,10 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.securityContext | nindent 8 }}
+      {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-        - name: {{ .Values.global.imagePullSecrets }}
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
         - name: frontend
           image: "{{ include "vexa.imageRepository" (dict "imageRoot" .Values.frontend.image "global" .Values.global) }}"
