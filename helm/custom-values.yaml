@@ -384,6 +384,41 @@ whisperProxy:
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
 
+# Frontend - Next.js 15 Application
+frontend:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: vexa-frontend
+    tag: "1.0.0"
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 200m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  env:
+    NEXT_PUBLIC_VEXA_API_URL: "https://voice.axiomic.com.cy"
+    NEXT_PUBLIC_VEXA_WS_URL: "wss://voice.axiomic.com.cy/ws"
+    NEXT_PUBLIC_APP_URL: "https://voice.axiomic.com.cy"
+    NODE_ENV: "production"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
 # Ingress
 ingress:
   enabled: true
@@ -417,6 +452,11 @@ ingress:
           service:
             name: vexa-api-gateway
             port: 8000
+        - path: /
+          pathType: Prefix
+          service:
+            name: vexa-frontend
+            port: 3000
 
   tls:
     - secretName: vexa-tls
@@ -445,6 +485,8 @@ podDisruptionBudget:
   botManager:
     minAvailable: 1
   transcriptionCollector:
+    minAvailable: 1
+  frontend:
     minAvailable: 1
 
 # Security Context

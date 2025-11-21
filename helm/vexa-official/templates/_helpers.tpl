@@ -204,3 +204,16 @@ app.kubernetes.io/component: redis
 {{ include "vexa.selectorLabels" . }}
 app.kubernetes.io/component: redis
 {{- end }}
+
+{{/*
+Frontend labels
+*/}}
+{{- define "vexa.frontend.labels" -}}
+{{ include "vexa.labels" . }}
+app.kubernetes.io/component: frontend
+{{- end }}
+
+{{- define "vexa.frontend.selectorLabels" -}}
+{{ include "vexa.selectorLabels" . }}
+app.kubernetes.io/component: frontend
+{{- end }}
