@@ -69,9 +69,9 @@ export default function MeetingsPage() {
               <p className="text-sm text-muted-foreground mt-2">
                 Status: {meeting.status}
               </p>
-              {meeting.start_time && (
+              {meeting.startTime && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Started: {new Date(meeting.start_time).toLocaleString()}
+                  Started: {new Date(meeting.startTime).toLocaleString()}
                 </p>
               )}
             </div>
