@@ -1,0 +1,129 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBTCCAe2gAwIBAgIIPFNP/eioSiQwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczAeFw0yNTExMTkyMzIyNTNaFw0zNTExMTcyMzI3NTNaMBUx
+      EzARBgNVBAMTCmt1YmVybmV0ZXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+      AoIBAQDDncY0UlsstIooK++Q9FLfPMxzETUYXOAMBBXFpRCGVPCJkffC81f1k46l
+      2IC02CqzmwPt3OVxvoVFbqG1ddo3Ut1MhPW45vmUOz33XiUuvj1HyYKXwkFOR16W
+      M2TywKzZRH3kN9sB8tnldxNru9Tx7XEFgV36urBpcwmzmvmJP1p3DbakYBvNx43X
+      HCW4cd7KAT2Du3r9ayjE9dZcQXcVpldFpFulZrj4Q2xnCFlX4HbRsAAZz6cWBdU2
+      ruJqzTEQ0RnfHksOirp77aBnXpp1JiVjTCT0465tEpjZHHq3kLZqo2KOJr4rUUFf
+      ZKfVjIsffbMajPmgPFF08e4WwHN1AgMBAAGjWTBXMA4GA1UdDwEB/wQEAwICpDAP
+      BgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSFq08HvD5v3UZcZB/LR8lE8gJ48DAV
+      BgNVHREEDjAMggprdWJlcm5ldGVzMA0GCSqGSIb3DQEBCwUAA4IBAQAvbifzdgvD
+      P3ZchDaZ3yApf6oqEzWB+zwggZilb2oflMXTyBkLJ0XGyqFrvuI1Pzx400v+BmzS
+      TCg9DiPb+JgUsro9/TEjnl9pHOim986eCelRp0vXeWHmTk17I/fbVWVTItTyAUTF
+      HRtXC6BVL+JwglicOyKWX8bgaRGQs7HEu/Gl7qBGn/+wHXG4B5etzkiyYWPsOfuH
+      tjH6iKDyG3xxM6/x/X5GnmYFkJDjE9LqMaoW3PltF/KQgo8WzNBM0oGjHJu7SZZm
+      NZFa8SiIlY9fqY7zewROf5Ous/fLzFpohTrx6WB1/HneoCQUAcpBDb0eiay4dGc1
+      xraCvrkmyZny
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2025-11-20T16:50:25Z"
+    name: kube-root-ca.crt
+    namespace: vexa
+    resourceVersion: "119071"
+    uid: ef1e84d4-aced-4dac-a481-4a134f5907e2
+- apiVersion: v1
+  data:
+    GOOGLE_MEET_AUTO_JOIN: "true"
+    GOOGLE_MEET_ENABLED: "true"
+    GOOGLE_MEET_WAIT_FOR_ADMISSION: "true"
+    MAX_MEETING_DURATION: "14400"
+    MICROSOFT_TEAMS_AUTO_JOIN: "true"
+    MICROSOFT_TEAMS_ENABLED: "true"
+    POSTGRES_DB: vexa
+    SPEAKER_DIARIZATION: "true"
+    SUMMARY_MODEL: gpt-4
+    SUMMARY_PROMPT: 'Analyze this meeting transcript and provide: 1) Overview, 2)
+      Key Decisions, 3) Action Items with owners, 4) Important Questions, 5) Highlights'
+    TRANSCRIPTION_LANGUAGE: auto
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-config
+    namespace: vexa
+    resourceVersion: "485735"
+    uid: 538d1027-cf88-4d93-bf26-9d6de76ca2b4
+- apiVersion: v1
+  data:
+    postgresql.conf: |2
+
+      max_connections = 200
+      shared_buffers = 1GB
+      effective_cache_size = 3GB
+      maintenance_work_mem = 256MB
+      checkpoint_completion_target = 0.9
+      wal_buffers = 16MB
+      default_statistics_target = 100
+      random_page_cost = 1.1
+      work_mem = 5242kB
+      min_wal_size = 1GB
+      max_wal_size = 4GB
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-20T22:30:57Z"
+    labels:
+      app.kubernetes.io/component: postgresql
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-postgresql-config
+    namespace: vexa
+    resourceVersion: "204278"
+    uid: b6be733c-44fe-499e-bd83-ff9168b442b2
+- apiVersion: v1
+  data:
+    redis.conf: |2
+
+      maxmemory 768mb
+      maxmemory-policy allkeys-lru
+      save 900 1
+      save 300 10
+      save 60 10000
+      appendonly yes
+      appendfsync everysec
+  kind: ConfigMap
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-20T22:30:57Z"
+    labels:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-redis-config
+    namespace: vexa
+    resourceVersion: "204277"
+    uid: 019a6f02-210c-444e-8369-63f0142b8275
+kind: List
+metadata:
+  resourceVersion: ""

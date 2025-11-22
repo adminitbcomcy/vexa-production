@@ -1,0 +1,397 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"meta.helm.sh/release-name":"vexa","meta.helm.sh/release-namespace":"vexa"},"creationTimestamp":"2025-11-21T20:31:14Z","labels":{"app.kubernetes.io/component":"frontend","app.kubernetes.io/instance":"vexa","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"vexa","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"vexa-1.0.0"},"name":"frontend","namespace":"vexa","resourceVersion":"518909","uid":"5fd6cc88-409d-4edb-8a61-523227980841"},"spec":{"clusterIP":"10.96.104.38","clusterIPs":["10.96.104.38"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"name":"http","port":3000,"protocol":"TCP","targetPort":"http"}],"selector":{"app.kubernetes.io/component":"frontend","app.kubernetes.io/instance":"vexa","app.kubernetes.io/name":"vexa"},"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T21:18:18Z"
+    labels:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: frontend
+    namespace: vexa
+    resourceVersion: "530750"
+    uid: 5a83aa4e-c631-45ff-a435-a37742955b86
+  spec:
+    clusterIP: 10.96.104.38
+    clusterIPs:
+    - 10.96.104.38
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: admin-api
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-admin-api
+    namespace: vexa
+    resourceVersion: "485759"
+    uid: 2e270538-7982-4594-bfab-92c4c64d2e23
+  spec:
+    clusterIP: 10.101.61.176
+    clusterIPs:
+    - 10.101.61.176
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8001
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: admin-api
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: api-gateway
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-api-gateway
+    namespace: vexa
+    resourceVersion: "485743"
+    uid: b8bd0792-02f0-4a30-8d30-6b8432ac7f9c
+  spec:
+    clusterIP: 10.104.77.111
+    clusterIPs:
+    - 10.104.77.111
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8000
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: api-gateway
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: bot-manager
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-bot-manager
+    namespace: vexa
+    resourceVersion: "485751"
+    uid: aaf52dd7-d71f-4a9a-b79d-c548b96aed40
+  spec:
+    clusterIP: 10.106.0.42
+    clusterIPs:
+    - 10.106.0.42
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: bot-manager
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T23:11:42Z"
+    labels:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-frontend
+    namespace: vexa
+    resourceVersion: "557859"
+    uid: 7798cca0-45cc-4390-8f1a-461d5f1f4e0e
+  spec:
+    clusterIP: 10.98.105.30
+    clusterIPs:
+    - 10.98.105.30
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: mcp
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-mcp
+    namespace: vexa
+    resourceVersion: "485747"
+    uid: 757c235b-9846-4239-9977-d128e69d6750
+  spec:
+    clusterIP: 10.103.12.236
+    clusterIPs:
+    - 10.103.12.236
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 18888
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: mcp
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-20T22:30:57Z"
+    labels:
+      app.kubernetes.io/component: postgresql
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-postgresql
+    namespace: vexa
+    resourceVersion: "204289"
+    uid: 08773c38-f544-48f9-9e37-df052e48eea9
+  spec:
+    clusterIP: None
+    clusterIPs:
+    - None
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: postgresql
+      port: 5432
+      protocol: TCP
+      targetPort: postgresql
+    selector:
+      app.kubernetes.io/component: postgresql
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-20T22:30:57Z"
+    labels:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-redis-master
+    namespace: vexa
+    resourceVersion: "204299"
+    uid: 0978d575-b429-44e1-a601-70cc045983db
+  spec:
+    clusterIP: 10.101.143.165
+    clusterIPs:
+    - 10.101.143.165
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    selector:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: transcription-collector
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-transcription-collector
+    namespace: vexa
+    resourceVersion: "485763"
+    uid: f956de89-da73-464e-b769-b17f49ec74d3
+  spec:
+    clusterIP: 10.103.215.123
+    clusterIPs:
+    - 10.103.215.123
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 8000
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: transcription-collector
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    labels:
+      app.kubernetes.io/component: whisper-proxy
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-whisper-proxy
+    namespace: vexa
+    resourceVersion: "485755"
+    uid: 7ab30d8e-6325-4300-b7bd-ebd19e6661c0
+  spec:
+    clusterIP: 10.107.217.236
+    clusterIPs:
+    - 10.107.217.236
+    internalTrafficPolicy: Cluster
+    ipFamilies:
+    - IPv4
+    ipFamilyPolicy: SingleStack
+    ports:
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: http
+    selector:
+      app.kubernetes.io/component: whisper-proxy
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/name: vexa
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata:
+  resourceVersion: ""

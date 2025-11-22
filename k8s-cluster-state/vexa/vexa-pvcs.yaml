@@ -1,0 +1,79 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: driver.longhorn.io
+      volume.kubernetes.io/storage-provisioner: driver.longhorn.io
+    creationTimestamp: "2025-11-20T20:40:07Z"
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app.kubernetes.io/component: postgresql
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: data-vexa-postgresql-0
+    namespace: vexa
+    resourceVersion: "170061"
+    uid: 00141c40-13e8-43e5-98c5-69b57c350c2e
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 50Gi
+    storageClassName: longhorn
+    volumeMode: Filesystem
+    volumeName: pvc-00141c40-13e8-43e5-98c5-69b57c350c2e
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 50Gi
+    phase: Bound
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+      volume.beta.kubernetes.io/storage-provisioner: driver.longhorn.io
+      volume.kubernetes.io/storage-provisioner: driver.longhorn.io
+    creationTimestamp: "2025-11-20T20:40:07Z"
+    finalizers:
+    - kubernetes.io/pvc-protection
+    labels:
+      app.kubernetes.io/component: redis
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: data-vexa-redis-0
+    namespace: vexa
+    resourceVersion: "170075"
+    uid: 07d32b77-1be4-486e-96d8-b50b4b910482
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+    storageClassName: longhorn
+    volumeMode: Filesystem
+    volumeName: pvc-07d32b77-1be4-486e-96d8-b50b4b910482
+  status:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 10Gi
+    phase: Bound
+kind: List
+metadata:
+  resourceVersion: ""

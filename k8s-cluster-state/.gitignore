@@ -1,0 +1,7 @@
+# Sensitive files - DO NOT COMMIT!
+**/vexa-secrets.yaml
+**/all-secrets.yaml
+
+# System configurations that may contain sensitive data
+**/iptables-rules.txt
+**/firewalld-zones.txt

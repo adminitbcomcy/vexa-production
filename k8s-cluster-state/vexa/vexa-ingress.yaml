@@ -1,0 +1,78 @@
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-prod","nginx.ingress.kubernetes.io/affinity":"cookie","nginx.ingress.kubernetes.io/proxy-body-size":"100m","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600","nginx.ingress.kubernetes.io/session-cookie-hash":"sha1","nginx.ingress.kubernetes.io/session-cookie-name":"vexa-session","nginx.ingress.kubernetes.io/upstream-hash-by":"$http_x_api_key","nginx.ingress.kubernetes.io/websocket-services":"vexa-api-gateway"},"labels":{"app.kubernetes.io/instance":"vexa","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"vexa","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"vexa-1.0.0"},"name":"vexa","namespace":"vexa"},"spec":{"ingressClassName":"nginx","rules":[{"host":"voice.axiomic.com.cy","http":{"paths":[{"backend":{"service":{"name":"vexa-api-gateway","port":{"number":8000}}},"path":"/api","pathType":"Prefix"},{"backend":{"service":{"name":"vexa-api-gateway","port":{"number":8000}}},"path":"/admin","pathType":"Prefix"},{"backend":{"service":{"name":"vexa-api-gateway","port":{"number":8000}}},"path":"/ws","pathType":"Prefix"},{"backend":{"service":{"name":"frontend","port":{"number":3000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["voice.axiomic.com.cy"],"secretName":"vexa-tls"}]}}
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+      nginx.ingress.kubernetes.io/affinity: cookie
+      nginx.ingress.kubernetes.io/proxy-body-size: 100m
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+      nginx.ingress.kubernetes.io/session-cookie-name: vexa-session
+      nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_api_key
+      nginx.ingress.kubernetes.io/websocket-services: vexa-api-gateway
+    creationTimestamp: "2025-11-21T21:18:28Z"
+    generation: 1
+    labels:
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa
+    namespace: vexa
+    resourceVersion: "557876"
+    uid: b6db5608-175d-4f50-a1ba-0cb55ad12c52
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: voice.axiomic.com.cy
+      http:
+        paths:
+        - backend:
+            service:
+              name: vexa-api-gateway
+              port:
+                number: 8000
+          path: /api
+          pathType: Prefix
+        - backend:
+            service:
+              name: vexa-api-gateway
+              port:
+                number: 8000
+          path: /admin
+          pathType: Prefix
+        - backend:
+            service:
+              name: vexa-api-gateway
+              port:
+                number: 8000
+          path: /ws
+          pathType: Prefix
+        - backend:
+            service:
+              name: frontend
+              port:
+                number: 3000
+          path: /
+          pathType: ImplementationSpecific
+    tls:
+    - hosts:
+      - voice.axiomic.com.cy
+      secretName: vexa-tls
+  status:
+    loadBalancer:
+      ingress:
+      - ip: 212.47.66.29
+      - ip: 212.47.66.31
+      - ip: 212.47.66.35
+kind: List
+metadata:
+  resourceVersion: ""

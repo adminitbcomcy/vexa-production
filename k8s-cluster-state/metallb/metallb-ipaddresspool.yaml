@@ -1,0 +1,27 @@
+apiVersion: v1
+items:
+- apiVersion: metallb.io/v1beta1
+  kind: IPAddressPool
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"metallb.io/v1beta1","kind":"IPAddressPool","metadata":{"annotations":{},"name":"public-ip-pool","namespace":"metallb-system"},"spec":{"addresses":["212.47.66.31/32"]}}
+    creationTimestamp: "2025-11-21T22:03:20Z"
+    generation: 1
+    name: public-ip-pool
+    namespace: metallb-system
+    resourceVersion: "542097"
+    uid: b2213469-52cb-406a-9844-03177890890f
+  spec:
+    addresses:
+    - 212.47.66.31/32
+    autoAssign: true
+    avoidBuggyIPs: false
+  status:
+    assignedIPv4: 1
+    assignedIPv6: 0
+    availableIPv4: 0
+    availableIPv6: 0
+kind: List
+metadata:
+  resourceVersion: ""

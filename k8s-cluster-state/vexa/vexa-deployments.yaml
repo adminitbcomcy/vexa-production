@@ -1,0 +1,1307 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "4"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 5
+    labels:
+      app.kubernetes.io/component: admin-api
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-admin-api
+    namespace: vexa
+    resourceVersion: "523271"
+    uid: ccecafe4-e868-4a29-b69c-e731d51face9
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: admin-api
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: admin-api
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        containers:
+        - env:
+          - name: POSTGRES_HOST
+            value: vexa-postgresql
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: DB_NAME
+            value: vexa
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: DB_USER
+            value: vexa
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: REDIS_HOST
+            value: vexa-redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: jwt-secret
+                name: vexa-secrets
+          - name: JWT_ALGORITHM
+            value: HS256
+          - name: JWT_EXPIRATION_HOURS
+            value: "24"
+          - name: API_HOST
+            value: 0.0.0.0
+          - name: API_PORT
+            value: "8001"
+          - name: CORS_ORIGINS
+          - name: LOG_LEVEL
+            value: info
+          - name: ADMIN_API_TOKEN
+          image: ghcr.io/adminitbcomcy/vexa-admin-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: admin-api
+          ports:
+          - containerPort: 8001
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:24Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T20:45:32Z"
+      message: ReplicaSet "vexa-admin-api-77bc7b5b4f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 5
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 3
+    labels:
+      app.kubernetes.io/component: api-gateway
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-api-gateway
+    namespace: vexa
+    resourceVersion: "522192"
+    uid: 953227fc-19db-41ea-94be-1bf9705e7f30
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: api-gateway
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: b7beae9f0da5b73fb0d1eb1192dab73082c64208314b07534f9115fc86b4c69d
+        labels:
+          app.kubernetes.io/component: api-gateway
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                    - vexa
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - env:
+          - name: LOG_LEVEL
+            value: info
+          - name: ENVIRONMENT
+            value: production
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            value: vexa
+          - name: DB_USER
+            value: vexa
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db-password
+                name: vexa-secrets
+          - name: REDIS_HOST
+            value: vexa-redis-master
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: REDIS_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0
+          - name: ADMIN_API_URL
+            value: http://vexa-admin-api:8001
+          - name: BOT_MANAGER_URL
+            value: http://vexa-bot-manager:8080
+          - name: TRANSCRIPTION_COLLECTOR_URL
+            value: http://vexa-transcription-collector:8000
+          - name: WHISPER_PROXY_URL
+            value: http://vexa-whisper-proxy:9090
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: openai-api-key
+                name: vexa-secrets
+                optional: true
+          image: ghcr.io/adminitbcomcy/vexa-api-gateway:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: api-gateway
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+          - mountPath: /app/.cache
+            name: cache
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tmp
+        - emptyDir: {}
+          name: cache
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:21Z"
+      lastUpdateTime: "2025-11-21T18:04:21Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T18:04:21Z"
+      message: ReplicaSet "vexa-api-gateway-575cc76557" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 3
+    labels:
+      app.kubernetes.io/component: bot-manager
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-bot-manager
+    namespace: vexa
+    resourceVersion: "522194"
+    uid: 0b706972-526b-4275-a77f-12a0b02497e7
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: bot-manager
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: bot-manager
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        containers:
+        - env:
+          - name: POSTGRES_HOST
+            value: vexa-postgresql
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: REDIS_HOST
+            value: vexa-redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: REDIS_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0
+          - name: REDIS_STREAM_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0
+          - name: CELERY_BROKER_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1
+          - name: CELERY_RESULT_BACKEND
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+          - name: BOT_IMAGE
+            value: ghcr.io/adminitbcomcy/vexa-bot:1.0.0
+          - name: BOT_JOB_TIMEOUT
+            value: "10800"
+          - name: GOOGLE_MEET_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: google-meet-client-id
+                name: vexa-secrets
+                optional: true
+          - name: GOOGLE_MEET_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: google-meet-client-secret
+                name: vexa-secrets
+                optional: true
+          - name: TEAMS_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: teams-client-id
+                name: vexa-secrets
+                optional: true
+          - name: TEAMS_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: teams-client-secret
+                name: vexa-secrets
+                optional: true
+          - name: ZOOM_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: zoom-client-id
+                name: vexa-secrets
+                optional: true
+          - name: ZOOM_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: zoom-client-secret
+                name: vexa-secrets
+                optional: true
+          - name: API_HOST
+            value: 0.0.0.0
+          - name: API_PORT
+            value: "8080"
+          - name: LOG_LEVEL
+            value: info
+          - name: BOT_IMAGE
+            value: ${REGISTRY}/vexa-bot:1.0.0
+          - name: BOT_NAMESPACE
+            value: vexa
+          - name: CELERY_BROKER_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1
+          - name: CELERY_RESULT_BACKEND
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/1
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_NAME
+            value: vexa
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_USER
+            value: vexa
+          - name: REDIS_HOST
+            value: vexa-redis-master
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_STREAM_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0
+          - name: REDIS_URL
+            value: redis://:ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs@vexa-redis-master:6379/0
+          image: ghcr.io/adminitbcomcy/vexa-bot-manager:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: bot-manager
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        serviceAccount: vexa-bot-manager
+        serviceAccountName: vexa-bot-manager
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:24Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: ReplicaSet "vexa-bot-manager-6b47fb75" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "6"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T20:31:14Z"
+    generation: 6
+    labels:
+      app.kubernetes.io/component: frontend
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-frontend
+    namespace: vexa
+    resourceVersion: "567323"
+    uid: e02b61c5-a8b1-4abd-8548-2e16387416d8
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        annotations:
+          checksum/config: b7beae9f0da5b73fb0d1eb1192dab73082c64208314b07534f9115fc86b4c69d
+          kubectl.kubernetes.io/restartedAt: "2025-11-22T00:45:50+01:00"
+        labels:
+          app.kubernetes.io/component: frontend
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                  - key: app.kubernetes.io/name
+                    operator: In
+                    values:
+                    - vexa
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - env:
+          - name: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+            valueFrom:
+              secretKeyRef:
+                key: clerk-publishable-key
+                name: vexa-secrets
+          - name: CLERK_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                key: clerk-secret-key
+                name: vexa-secrets
+          - name: CLERK_WEBHOOK_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: clerk-webhook-secret
+                name: vexa-secrets
+          - name: NEXT_PUBLIC_VEXA_API_URL
+            value: http://vexa-api-gateway.vexa.svc.cluster.local:8000
+          - name: NEXT_PUBLIC_VEXA_WS_URL
+            value: ws://vexa-api-gateway.vexa.svc.cluster.local:8000/ws
+          - name: NEXT_PUBLIC_APP_URL
+            value: https://voice.axiomic.com.cy
+          - name: VEXA_ADMIN_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: admin-api-token
+                name: vexa-secrets
+          - name: NODE_ENV
+            value: production
+          - name: PORT
+            value: "3000"
+          - name: HOSTNAME
+            value: 0.0.0.0
+          image: ghcr.io/adminitbcomcy/vexa-frontend:1.0.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: http
+            timeoutSeconds: 5
+          name: frontend
+          ports:
+          - containerPort: 3000
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            tcpSocket:
+              port: http
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+          - mountPath: /app/.next/cache
+            name: cache
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext:
+          fsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tmp
+        - emptyDir: {}
+          name: cache
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2025-11-21T23:51:15Z"
+      lastUpdateTime: "2025-11-21T23:51:15Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T20:31:14Z"
+      lastUpdateTime: "2025-11-21T23:52:23Z"
+      message: ReplicaSet "vexa-frontend-6dd6c6dcdb" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 6
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 3
+    labels:
+      app.kubernetes.io/component: mcp
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-mcp
+    namespace: vexa
+    resourceVersion: "522210"
+    uid: c064e52a-9d57-4b47-99c9-b85d2fa76a1d
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: mcp
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: mcp
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        containers:
+        - env:
+          - name: POSTGRES_HOST
+            value: vexa-postgresql
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: REDIS_HOST
+            value: vexa-redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: openai-api-key
+                name: vexa-secrets
+                optional: true
+          - name: OPENAI_MODEL
+            value: gpt-4
+          - name: OPENAI_TEMPERATURE
+            value: "0.7"
+          - name: MCP_HOST
+            value: 0.0.0.0
+          - name: MCP_PORT
+            value: "18888"
+          - name: MCP_SERVER_NAME
+            value: vexa-mcp
+          - name: MCP_VERSION
+            value: 1.0.0
+          - name: ENABLE_MEETING_TOOLS
+            value: "true"
+          - name: ENABLE_TRANSCRIPT_TOOLS
+            value: "true"
+          - name: ENABLE_SUMMARY_TOOLS
+            value: "true"
+          - name: API_GATEWAY_URL
+            value: http://vexa-api-gateway:8000
+          - name: LOG_LEVEL
+            value: info
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_NAME
+            value: vexa
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_USER
+            value: vexa
+          image: ghcr.io/adminitbcomcy/vexa-mcp:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: mcp
+          ports:
+          - containerPort: 18888
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 250m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:24Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: ReplicaSet "vexa-mcp-57c8d64565" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "1"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 3
+    labels:
+      app.kubernetes.io/component: transcription-collector
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-transcription-collector
+    namespace: vexa
+    resourceVersion: "522223"
+    uid: 5419e756-faa8-4557-8237-40574f295214
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: transcription-collector
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: transcription-collector
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        containers:
+        - env:
+          - name: POSTGRES_HOST
+            value: vexa-postgresql
+          - name: POSTGRES_PORT
+            value: "5432"
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_NAME
+            valueFrom:
+              configMapKeyRef:
+                key: POSTGRES_DB
+                name: vexa-config
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                key: postgres-user
+                name: vexa-secrets
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: postgres-password
+                name: vexa-secrets
+          - name: REDIS_HOST
+            value: vexa-redis
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: REDIS_STREAM_NAME
+            value: transcription_stream
+          - name: REDIS_CONSUMER_GROUP
+            value: transcription_collectors
+          - name: REDIS_CONSUMER_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: WHISPER_PROXY_URL
+            value: http://vexa-whisper-proxy:8080
+          - name: API_HOST
+            value: 0.0.0.0
+          - name: API_PORT
+            value: "8003"
+          - name: LOG_LEVEL
+            value: info
+          - name: TRANSCRIPTION_LANGUAGE
+            valueFrom:
+              configMapKeyRef:
+                key: TRANSCRIPTION_LANGUAGE
+                name: vexa-config
+          - name: BATCH_SIZE
+            value: "10"
+          - name: MAX_RETRIES
+            value: "3"
+          - name: DB_HOST
+            value: vexa-postgresql
+          - name: DB_NAME
+            value: vexa
+          - name: DB_PORT
+            value: "5432"
+          - name: DB_USER
+            value: vexa
+          - name: REDIS_CONSUMER_GROUP
+            value: collector_group
+          - name: REDIS_HOST
+            value: vexa-redis-master
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_STREAM_NAME
+            value: transcription_segments
+          - name: SEGMENT_IMMUTABILITY_THRESHOLD
+            value: "30"
+          - name: SEGMENT_TTL
+            value: "3600"
+          image: ghcr.io/adminitbcomcy/vexa-transcription-collector:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: transcription-collector
+          ports:
+          - containerPort: 8000
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 2
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:24Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T18:04:24Z"
+      message: ReplicaSet "vexa-transcription-collector-7f58c48cff" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 3
+    readyReplicas: 2
+    replicas: 2
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      deployment.kubernetes.io/revision: "4"
+      meta.helm.sh/release-name: vexa
+      meta.helm.sh/release-namespace: vexa
+    creationTimestamp: "2025-11-21T18:04:09Z"
+    generation: 5
+    labels:
+      app.kubernetes.io/component: whisper-proxy
+      app.kubernetes.io/instance: vexa
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: vexa
+      app.kubernetes.io/version: 1.0.0
+      helm.sh/chart: vexa-1.0.0
+    name: vexa-whisper-proxy
+    namespace: vexa
+    resourceVersion: "523155"
+    uid: 51d8ac27-9ea4-4383-8616-dd2135d9e934
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app.kubernetes.io/component: whisper-proxy
+        app.kubernetes.io/instance: vexa
+        app.kubernetes.io/name: vexa
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/component: whisper-proxy
+          app.kubernetes.io/instance: vexa
+          app.kubernetes.io/name: vexa
+      spec:
+        containers:
+        - env:
+          - name: RUNPOD_API_KEY
+            valueFrom:
+              secretKeyRef:
+                key: runpod-api-key
+                name: vexa-secrets
+          - name: RUNPOD_API_KEY
+          - name: RUNPOD_ENDPOINT_ID
+            valueFrom:
+              secretKeyRef:
+                key: runpod-endpoint-id
+                name: vexa-secrets
+          - name: RUNPOD_ENDPOINT_ID
+          - name: RUNPOD_API_URL
+            value: https://api.runpod.ai/v2/$(RUNPOD_ENDPOINT_ID)/run
+          - name: WHISPER_MODEL_SIZE
+            value: large-v3
+          - name: WHISPER_LANGUAGE
+            valueFrom:
+              configMapKeyRef:
+                key: TRANSCRIPTION_LANGUAGE
+                name: vexa-config
+          - name: ENABLE_VAD
+            value: "true"
+          - name: VAD_THRESHOLD
+            value: "0.5"
+          - name: REDIS_HOST
+            value: vexa-redis
+          - name: REDIS_HOST
+            value: vexa-redis-master
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PORT
+            value: "6379"
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: redis-password
+                name: vexa-secrets
+          - name: REDIS_PASSWORD
+            value: ntGiY0weFYj7l3Uy3j0IGlF0x5iK8Zsa6cpoFtr%2FoZs
+          - name: REDIS_TTL
+            value: "3600"
+          - name: API_HOST
+            value: 0.0.0.0
+          - name: API_PORT
+            value: "9090"
+          - name: MAX_AUDIO_SIZE_MB
+            value: "25"
+          - name: TIMEOUT_SECONDS
+            value: "300"
+          - name: MAX_RETRIES
+            value: "3"
+          - name: RETRY_DELAY_SECONDS
+            value: "5"
+          - name: LOG_LEVEL
+            value: info
+          - name: ENABLE_METRICS
+            value: "true"
+          - name: LANGUAGE_DETECTION_SEGMENTS
+            value: "10"
+          - name: MAX_CONCURRENT_STREAMS
+            value: "10"
+          - name: REDIS_STREAM_NAME
+            value: transcription_segments
+          - name: VAD_FILTER_THRESHOLD
+            value: "0.2"
+          image: ghcr.io/adminitbcomcy/vexa-whisper-proxy:1.0.0
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: whisper-proxy
+          ports:
+          - containerPort: 9090
+            name: http
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: ghcr-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  status:
+    availableReplicas: 1
+    conditions:
+    - lastTransitionTime: "2025-11-21T18:04:21Z"
+      lastUpdateTime: "2025-11-21T18:04:21Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2025-11-21T18:04:09Z"
+      lastUpdateTime: "2025-11-21T20:45:20Z"
+      message: ReplicaSet "vexa-whisper-proxy-7d4b8d7f7f" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+    observedGeneration: 5
+    readyReplicas: 1
+    replicas: 1
+    updatedReplicas: 1
+kind: List
+metadata:
+  resourceVersion: ""
