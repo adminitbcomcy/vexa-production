@@ -18,13 +18,13 @@ import type {
 export const getMeetings = async (
   params?: GetMeetingsParams
 ): Promise<MeetingListResponse> => {
-  const { data } = await apiClient.get('/api/meetings', { params });
+  const { data } = await apiClient.get('/meetings', { params });
   return data;
 };
 
 // Get single meeting
 export const getMeeting = async (id: number): Promise<Meeting> => {
-  const { data } = await apiClient.get(`/api/meetings/${id}`);
+  const { data } = await apiClient.get(`/meetings/${id}`);
   return data;
 };
 
@@ -33,8 +33,8 @@ export const getTranscript = async (
   platform: string,
   nativeId: string
 ): Promise<GetTranscriptResponse> => {
-  const { data } = await apiClient.get(
-    `/api/transcripts/${platform}/${nativeId}`
+  const { data} = await apiClient.get(
+    `/transcripts/${platform}/${nativeId}`
   );
   return data;
 };
@@ -43,7 +43,7 @@ export const getTranscript = async (
 export const createBot = async (
   request: CreateBotRequest
 ): Promise<CreateBotResponse> => {
-  const { data } = await apiClient.post('/api/bots', request);
+  const { data } = await apiClient.post('/bots', request);
   return data;
 };
 
@@ -52,12 +52,12 @@ export const stopBot = async (
   platform: string,
   nativeId: string
 ): Promise<void> => {
-  await apiClient.delete(`/api/bots/${platform}/${nativeId}`);
+  await apiClient.delete(`/bots/${platform}/${nativeId}`);
 };
 
 // Get bot status
 export const getBotStatus = async (): Promise<BotStatus[]> => {
-  const { data } = await apiClient.get('/api/bots/status');
+  const { data } = await apiClient.get('/bots/status');
   return data;
 };
 
@@ -68,7 +68,7 @@ export const updateMeeting = async (
   updates: Partial<Meeting>
 ): Promise<Meeting> => {
   const { data } = await apiClient.patch(
-    `/api/meetings/${platform}/${nativeId}`,
+    `/meetings/${platform}/${nativeId}`,
     updates
   );
   return data;
@@ -79,11 +79,11 @@ export const deleteMeeting = async (
   platform: string,
   nativeId: string
 ): Promise<void> => {
-  await apiClient.delete(`/api/meetings/${platform}/${nativeId}`);
+  await apiClient.delete(`/meetings/${platform}/${nativeId}`);
 };
 
 // Generate AI summary (if not auto-generated)
 export const generateSummary = async (meetingId: number): Promise<any> => {
-  const { data } = await apiClient.post(`/api/meetings/${meetingId}/summary`);
+  const { data } = await apiClient.post(`/meetings/${meetingId}/summary`);
   return data;
 };

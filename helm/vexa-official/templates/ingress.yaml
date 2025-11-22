@@ -32,7 +32,7 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "vexa.fullname" $ }}-{{ .service.name }}
+                name: {{ .service.name }}
                 port:
                   number: {{ .service.port }}
           {{- end }}
